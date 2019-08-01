@@ -1,0 +1,58 @@
+language: go
+
+go:
+  - '1.12.x'
+
+dist: xenial
+
+services:
+  - docker
+
+jobs:
+  include:
+    - stage: Integration Tests
+      before_script:
+        # Download and install kubectl
+        - curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+
+        # Download and install KinD
+        - GO111MODULE=on go get sigs.k8s.io/kind
+        # It's possible to download and install KinD using curl, similar as for kubectl
+        # This is useful in cases when Go toolchain isn't available or you prefer running stable version
+        # Binaries for KinD are available on GitHub Releases: https://github.com/kubernetes-sigs/kind/releases
+        # - curl -Lo kind https://github.com/kubernetes-sigs/kind/releases/download/0.0.1/kind-linux-amd64 && chmod +x kind && sudo mv kind /usr/local/bin/
+
+        # Create a new Kubernetes cluster using KinD
+        - kind create cluster
+
+        # Set KUBECONFIG environment variable
+        - export KUBECONFIG="$(kind get kubeconfig-path)"
+        - wget -O- https://get.helm.sh/helm-v2.14.3-linux-amd64.tar.gz > helm.tgz && tar -zxvf helm.tgz && cd linux-amd64/ && sudo mv helm /usr/local/bin
+        # install istio
+        - |
+          # wget -O- https://github.com/istio/istio/releases/download/1.1.11/istio-1.1.11-linux.tar.gz > istio.tgz
+          # tar -zxvf istio.tgz && cd istio-1.1.11
+          # kubectl create namespace istio-system
+          # helm template install/kubernetes/helm/istio-init --name istio-init --namespace istio-system | kubectl apply -f -
+          # for i in $(seq 50); do echo $(kubectl get ns); done
+          # while : ; do
+          #   istio_crds=$(KUBECONFIG="$(kind get kubeconfig-path)" kubectl get crds | grep 'istio.io\|certmanager.k8s.io' | wc -l)
+          #   if [[ $istio_state =~ .*23 ]]; then
+          #     break;
+          #   fi
+          # done
+          # helm template install/kubernetes/helm/istio --name istio --namespace istio-system | kubectl apply -f -
+          kubectl apply -f https://github.com/knative/serving/releases/download/v0.5.2/istio-crds.yaml -f https://github.com/knative/serving/releases/download/v0.5.2/istio-lean.yaml -f https://github.com/knative/serving/releases/download/v0.5.2/istio.yaml
+          for i in $(seq 50); do echo $(kubectl get ns); sleep 5 done
+
+        # install knative
+        - |
+          while : ; do
+            istio_state=$(KUBECONFIG="$(kind get kubeconfig-path)" kubectl get pods -n istio-system | grep pilot)
+            if [[ $istio_state =~ .*2/2.*Running.* ]]; then
+              break;
+            fi
+          done
+
+        - kubectl apply --filename https://github.com/knative/serving/releases/download/v0.7.1/serving.yaml --filename https://github.com/knative/build/releases/download/v0.7.0/build.yaml --filename https://github.com/knative/serving/releases/download/v0.7.1/serving-post-1.14.yaml --filename https://github.com/knative/serving/releases/download/v0.7.1/serving-beta-crds.yaml 
+      script: make test-integration
