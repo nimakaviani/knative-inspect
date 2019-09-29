@@ -41,6 +41,10 @@ default    goapp-first                          | |  | L Service          -
 default    goapp-first-rctct                    | |  | L Service          -
 default    goapp-first-5d4rn                    | |  L Service            -
 default    goapp                                L Route                   True
+default    goapp                                 L Service                -
+default    goapp                                 L Ingress                True
+default    goapp-mesh                             L VirtualService        -
+default    goapp                                  L VirtualService        -
 ```
 
 ## Inspect Changes in ConfigMaps
