@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"knative.dev/serving/pkg/apis/serving"
 )
 
 type KsvcOpts struct {
@@ -132,11 +133,6 @@ func setListOption(opts *metav1.ListOptions, fieldName string, fieldValue string
 }
 
 func findLabeledResoures(service, namespace string, deps core.Deps) ([]krsc.Resource, error) {
-
-	filterLabel := map[string]string{
-		"serving.knative.dev/service": service,
-	}
-
 	dynamicClient, err := deps.DynamicClient()
 	if err != nil {
 		return nil, err
@@ -148,5 +144,19 @@ func findLabeledResoures(service, namespace string, deps core.Deps) ([]krsc.Reso
 	}
 
 	idr := krsc.NewIdentifiedResources(coreClient, dynamicClient, []string{})
-	return idr.List(labels.Set(filterLabel).AsSelector())
+
+	filterLabels := []map[string]string{
+		{serving.ServiceLabelKey: service},
+		{serving.RouteLabelKey: service},
+	}
+	labeledResources := []krsc.Resource{}
+	for _, l := range filterLabels {
+		list, err := idr.List(labels.Set(l).AsSelector())
+		if err != nil {
+			return nil, err
+		}
+		labeledResources = append(labeledResources, list...)
+	}
+
+	return labeledResources, nil
 }
