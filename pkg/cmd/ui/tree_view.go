@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"sort"
+
 	"strings"
 
 	"github.com/cppforlife/go-cli-ui/ui"
@@ -17,6 +18,7 @@ type TreeView struct {
 	Source      string
 	ResourceMap [][]krsc.Resource
 	Sort        bool
+	Verbose     bool
 }
 
 func (v TreeView) Print(ui ui.UI) {
@@ -24,7 +26,7 @@ func (v TreeView) Print(ui ui.UI) {
 	groupHeader.Hidden = true
 
 	versionHeader := uitable.NewHeader("Version")
-	versionHeader.Hidden = true
+	versionHeader.Hidden = !v.Verbose
 
 	table := uitable.Table{
 		Title:   fmt.Sprintf("Resources in %s", v.Source),
@@ -34,8 +36,8 @@ func (v TreeView) Print(ui ui.UI) {
 			groupHeader,
 			uitable.NewHeader("Namespace"),
 			uitable.NewHeader("Name"),
-			uitable.NewHeader("Kind"),
 			versionHeader,
+			uitable.NewHeader("Kind"),
 			uitable.NewHeader("Ready"),
 			uitable.NewHeader("Reason"),
 		},
@@ -148,6 +150,7 @@ func (v TreeView) addBlankRow(table *uitable.Table) {
 		uitable.NewValueString(" "),
 		uitable.NewValueString(" "),
 		uitable.NewValueString(" "),
+		uitable.NewValueString(" "),
 	}
 	table.Rows = append(table.Rows, row)
 }
@@ -172,24 +175,26 @@ func (v TreeView) addRows(table *uitable.Table, rt resourceTree, depth int, conn
 
 	var delim string
 	if depth > 0 {
-		delim = fmt.Sprintf("%sL ", connector)
+		delim = fmt.Sprintf("%sL", connector)
+		if !hasSibling {
+			delim += "_"
+		}
+		delim += " "
 	}
-
-	delim = strings.ReplaceAll(delim, "|L", "L")
 
 	row := []uitable.Value{
 		uitable.NewValueString(""),
 		uitable.NewValueString(resource.Namespace()),
 		uitable.NewValueString(resource.Name()),
-		ValueColored{
+		uitable.NewValueString(resource.APIVersion()),
+		ValueEncoded{
 			S: delim + resource.Kind(),
 			Func: func(str string, opts ...interface{}) string {
 				result := fmt.Sprintf(str, opts...)
-				return strings.Replace(result, delim, color.New(color.Faint).Sprintf("%s", delim), -1)
+				return strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(result, "|L", "├─"), "|", "│"), "L_", "└─")
 			},
 		},
-		uitable.NewValueString(resource.APIVersion()),
-		ValueColored{
+		ValueEncoded{
 			S: msg,
 			Func: func(str string, opts ...interface{}) string {
 				result := fmt.Sprintf(str, opts...)
@@ -202,7 +207,7 @@ func (v TreeView) addRows(table *uitable.Table, rt resourceTree, depth int, conn
 				return result
 			},
 		},
-		ValueColored{
+		ValueEncoded{
 			S: reason,
 			Func: func(str string, opts ...interface{}) string {
 				result := fmt.Sprintf(str, opts...)
@@ -227,15 +232,15 @@ func (v TreeView) addRows(table *uitable.Table, rt resourceTree, depth int, conn
 	}
 }
 
-type ValueColored struct {
+type ValueEncoded struct {
 	S    string
 	Func func(string, ...interface{}) string
 }
 
-func (t ValueColored) String() string                  { return t.S }
-func (t ValueColored) Value() uitable.Value            { return t }
-func (t ValueColored) Compare(other uitable.Value) int { panic("Never called") }
+func (t ValueEncoded) String() string                  { return t.S }
+func (t ValueEncoded) Value() uitable.Value            { return t }
+func (t ValueEncoded) Compare(other uitable.Value) int { panic("Never called") }
 
-func (t ValueColored) Fprintf(w io.Writer, pattern string, rest ...interface{}) (int, error) {
+func (t ValueEncoded) Fprintf(w io.Writer, pattern string, rest ...interface{}) (int, error) {
 	return fmt.Fprintf(w, "%s", t.Func(pattern, rest...))
 }

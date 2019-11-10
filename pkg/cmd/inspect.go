@@ -15,8 +15,9 @@ import (
 type InspectCmdOptions struct {
 	ui ui.UI
 
-	Debug bool
-	opts  insp.InspectorOptions
+	Debug   bool
+	Verbose bool
+	opts    insp.InspectorOptions
 
 	kubeconfigFlags flags.KubeconfigFlags
 	namespaceFlags  flags.NamespaceFlags
@@ -34,6 +35,7 @@ func NewInspectCmd(o *InspectCmdOptions) *cobra.Command {
 		RunE:    func(_ *cobra.Command, _ []string) error { return o.Run() },
 	}
 	cmd.Flags().BoolVar(&o.Debug, "debug", false, "Enable debug output")
+	cmd.Flags().BoolVarP(&o.Verbose, "verbose", "v", false, "Show verbose output")
 	cmd.Flags().StringSliceVarP(&o.opts.Services, "service", "s", []string{}, "Knative services to inspect (can be specified multiple times)")
 
 	o.kubeconfigFlags.Set(cmd)
@@ -62,6 +64,6 @@ func (o *InspectCmdOptions) inspect() error {
 		return err
 	}
 
-	kiui.TreeView{Source: strings.Join(o.opts.Services, ","), ResourceMap: result}.Print(o.ui)
+	kiui.TreeView{Source: strings.Join(o.opts.Services, ","), ResourceMap: result, Verbose: o.Verbose}.Print(o.ui)
 	return nil
 }
