@@ -24,28 +24,31 @@ Flags:
 ## Inspect Services
 
 ```
-± |master ✓ | → ./kni inspect -s goapp
-Resources in goapp
+± |master ✓ | → ./kni inspect -s echo
+Resources in echo
 
-Namespace  Name                               Kind                        Ready    Reason
-default    goapp                              Service                     True
-default    goapp                                L Configuration           True
-default    goapp-first                          | L Revision              True
-default    goapp-first-deployment               | | L Deployment          -
-default    goapp-first-deployment-6466c9b6f6    | | | L ReplicaSet        -
-default    goapp-first-cache                    | | L Image               -
-default    goapp-first                          | | L PodAutoscaler       False    NoTraffic
-default    goapp-first                          | |  L ServerlessService  Unknown  NoHealthyBackends
-default    goapp-first                          | |  | L Endpoints        -
-default    goapp-first                          | |  | L Service          -
-default    goapp-first-rctct                    | |  | L Service          -
-default    goapp-first-5d4rn                    | |  L Service            -
-default    goapp                                L Route                   True
-default    goapp                                 L Service                -
-default    goapp                                 L Ingress                True
-default    goapp-mesh                             L VirtualService        -
-default    goapp                                  L VirtualService        -
-```
+Namespace  Name                              Kind                        Ready    Reason
+default    echo                              Service                     True
+default    echo                                ├─ Configuration          True
+default    echo-7llk5                          │ └─ Revision             True
+default    echo-7llk5-deployment               │  ├─ Deployment          -
+default    echo-7llk5-deployment-7d5d85d567    │  │ └─ ReplicaSet        -
+default    echo-7llk5-cache                    │  ├─ Image               -
+default    echo-7llk5                          │  └─ PodAutoscaler       True
+default    echo-7llk5-metrics                  │   ├─ Service            -
+default    echo-7llk5                          │   ├─ Metric             True
+default    echo-7llk5                          │   └─ ServerlessService  Unknown  NoHealthyBackends
+default    echo-7llk5-private                  │    ├─ Service           -
+default    echo-7llk5                          │    ├─ Service           -
+default    echo-7llk5                          │    └─ Endpoints         -
+default    echo                                └─ Route                  True
+default    echo                                 ├─ Service               -
+default    echo                                 └─ Ingress               True
+default    echo-mesh                             ├─ VirtualService       -
+default    echo                                  └─ VirtualService       -
+
+
+19 resources
 
 ## Inspect Changes in ConfigMaps
 ```diff
