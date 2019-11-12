@@ -35,12 +35,13 @@ func NewKubeVersionCmd(o *KubeVersionOptions) *cobra.Command {
 	}
 
 	o.kubeconfigFlags.Set(cmd)
-	o.config.ConfigurePathResolver(o.kubeconfigFlags.Path.Value)
-	o.config.ConfigureContextResolver(o.kubeconfigFlags.Context.Value)
 	return cmd
 }
 
 func (o *KubeVersionOptions) Run() error {
+	o.config.ConfigurePathResolver(o.kubeconfigFlags.Path.Value)
+	o.config.ConfigureContextResolver(o.kubeconfigFlags.Context.Value)
+
 	ui := core.NewPlainUI(o.Debug)
 	t1 := time.Now()
 

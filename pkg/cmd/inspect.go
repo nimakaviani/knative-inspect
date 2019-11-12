@@ -41,13 +41,13 @@ func NewInspectCmd(o *InspectCmdOptions) *cobra.Command {
 	o.kubeconfigFlags.Set(cmd)
 	o.namespaceFlags.Set(cmd)
 
-	o.opts.Config.ConfigurePathResolver(o.kubeconfigFlags.Path.Value)
-	o.opts.Config.ConfigureContextResolver(o.kubeconfigFlags.Context.Value)
-
 	return cmd
 }
 
 func (o *InspectCmdOptions) Run() error {
+	o.opts.Config.ConfigurePathResolver(o.kubeconfigFlags.Path.Value)
+	o.opts.Config.ConfigureContextResolver(o.kubeconfigFlags.Context.Value)
+
 	ui := core.NewPlainUI(o.Debug)
 	t1 := time.Now()
 

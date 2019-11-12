@@ -14,6 +14,11 @@ import (
 	"github.com/nimakaviani/knative-inspect/pkg/resources"
 )
 
+const (
+	ServiceKind = "Service"
+	ApiGroup    = "serving.knative.dev"
+)
+
 type TreeView struct {
 	Source      string
 	ResourceMap [][]krsc.Resource
@@ -111,7 +116,7 @@ func buildResourceTree(resources []krsc.Resource) resourceTree {
 
 func findRoot(nodes map[string]*resourceRef) *resourceRef {
 	for _, n := range nodes {
-		if n.parent == nil && n.self.Kind() == "Service" {
+		if n.parent == nil && n.self.Kind() == ServiceKind && strings.Contains(n.self.APIGroup(), ApiGroup) {
 			return n
 		}
 	}
