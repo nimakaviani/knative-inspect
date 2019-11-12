@@ -47,8 +47,8 @@ default    echo                                 └─ Ingress               Tru
 default    echo-mesh                             ├─ VirtualService       -
 default    echo                                  └─ VirtualService       -
 
-
 19 resources
+```
 
 ## Inspect Changes in ConfigMaps
 ```diff
